@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
+import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { parseProject, lint } from 'storylint-core';
+import { parseProject, lint, generateFishboneCanvas, generateFishboneHTML } from 'storylint-core';
 import {
   formatWarnings, formatSummary, formatChekhovLedger,
   formatCharacterReport, formatPacingReport, formatJson
@@ -29,11 +30,13 @@ ${BOLD}Commands:${RESET}
   ${BOLD}characters${RESET} [path]              Character screen time + arc report
   ${BOLD}pacing${RESET} [path]                  Pacing density + thread coverage
   ${BOLD}summary${RESET} [path]                 Project health dashboard
+  ${BOLD}fishbone${RESET} [path]               Generate fishbone timeline as Obsidian .canvas
   ${BOLD}ingest${RESET} <file...> [--into dir]  AI ingest: raw text → structured project
   ${BOLD}analyze${RESET} [path]                 AI analysis (coming soon)
 
 ${BOLD}Options:${RESET}
   --format json          Output as JSON (check command only)
+  --format html          Output fishbone as standalone HTML instead of .canvas
   --dry-run              Show what ingest would create without writing
   --merge                Ingest into existing project, flag duplicates
   --into <dir>           Write ingest output to specific directory
@@ -128,6 +131,35 @@ async function main(): Promise<void> {
       console.log(formatChekhovLedger(data));
       console.log(formatCharacterReport(data));
       console.log(formatPacingReport(data));
+      break;
+    }
+
+    case 'fishbone': {
+      const projectDir = path.resolve(positionalArgs[0] ?? '.');
+      const data = parseProject(projectDir);
+      const htmlFormat = args.includes('--format') && args[args.indexOf('--format') + 1] === 'html';
+
+      if (jsonFormat) {
+        // Raw canvas JSON to stdout
+        console.log(generateFishboneCanvas(data));
+      } else if (htmlFormat) {
+        // Standalone HTML file
+        const html = generateFishboneHTML(data);
+        const outPath = path.join(projectDir, 'fishbone-timeline.html');
+        fs.writeFileSync(outPath, html);
+        console.log(`  Fishbone timeline written to: ${outPath}`);
+        console.log(`  Open in a browser to view. Hover scenes for details.`);
+        console.log(`  ${data.scenes.length} scenes, ${data.threads.length} threads, ${data.chekhovs.length} Chekhovs mapped.`);
+      } else {
+        // Default: Obsidian .canvas file
+        const canvasJson = generateFishboneCanvas(data);
+        const outPath = path.join(projectDir, 'fishbone-timeline.canvas');
+        fs.writeFileSync(outPath, canvasJson);
+        console.log(`  Fishbone timeline written to: ${outPath}`);
+        console.log(`  Open it in Obsidian (Canvas view) to see the visualization.`);
+        console.log(`  ${data.scenes.length} scenes, ${data.threads.length} threads, ${data.chekhovs.length} Chekhovs mapped.`);
+        console.log(`  Tip: use --format html for a standalone browser version.`);
+      }
       break;
     }
 
