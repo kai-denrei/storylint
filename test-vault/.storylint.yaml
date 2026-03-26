@@ -1,0 +1,10 @@
+project:
+  name: "Solvency Protocol"
+  author: "Gerald"
+  description: "Illustrated story about algorithmic end-of-life policy"
+
+rules:
+  ABSENT_TOO_LONG:
+    threshold: 6
+  LATE_ARMING:
+    threshold: 8

@@ -1,0 +1,21 @@
+{
+  "name": "storylint-cli",
+  "version": "0.1.0",
+  "description": "CLI for StoryLint narrative intelligence toolkit",
+  "main": "dist/index.js",
+  "bin": {
+    "storylint": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "storylint-core": "0.1.0",
+    "@anthropic-ai/sdk": "^0.39.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.0",
+    "@types/node": "^22.0.0"
+  }
+}
