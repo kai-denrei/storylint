@@ -1,0 +1,10 @@
+project:
+  name: "To Build a Fire"
+  author: "Jack London (1908)"
+  description: "A man travels alone in the Yukon at -75°F, against the advice of an old-timer"
+
+rules:
+  ABSENT_TOO_LONG:
+    threshold: 5
+  LATE_ARMING:
+    threshold: 5

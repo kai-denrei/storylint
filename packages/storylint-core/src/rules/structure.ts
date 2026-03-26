@@ -2,31 +2,39 @@ import type { ProjectData, LintWarning } from '../types.js';
 import type { Rule } from './engine.js';
 
 // TALKING_HEADS: dialogue-heavy scene with no visual dynamism
+// Language-agnostic: checks quotation marks (universal) and structural fields, not prose verbs
 const talkingHeads: Rule = {
   id: 'TALKING_HEADS',
   defaultSeverity: 'warning',
   fn(data) {
     const warnings: LintWarning[] = [];
-    const dialogueMarkers = /[""\u201C\u201D]|said|asked|replied|whispered|shouted/i;
-    const actionMarkers = /walked|ran|grabbed|opened|slammed|stood|sat|moved|reached|turned|looked|pointed|pulled|pushed/i;
+    // Universal quotation marks across languages: "", «», 「」, '', ""
+    const dialogueMarkers = /[""\u201C\u201D\u00AB\u00BB\u300C\u300D\u300E\u300F\u2018\u2019]/;
 
     for (const scene of data.scenes) {
       const body = scene._body ?? '';
       if (body.length < 100) continue;
 
       const hasDialogue = dialogueMarkers.test(body);
-      const hasAction = actionMarkers.test(body);
       const hasLocation = !!scene.location;
       const hasVisualPrompt = !!scene.visual_prompt;
+      // Use mood tags as a language-agnostic signal for action/dynamism
+      const hasActionMood = (scene.mood ?? []).some(m =>
+        !['dialogue', 'talking', 'conversation', 'discussion', 'static'].includes(m.toLowerCase())
+      );
+      // If scene has characters with expressions, there's at least visual direction
+      const hasExpressions = (scene.characters ?? []).some(c =>
+        typeof c !== 'string' && c.expression
+      );
 
-      if (hasDialogue && !hasAction && !hasLocation && !hasVisualPrompt) {
+      if (hasDialogue && !hasLocation && !hasVisualPrompt && !hasActionMood && !hasExpressions) {
         warnings.push({
           rule: 'TALKING_HEADS',
           severity: 'warning',
           file: scene._file ?? `scenes/${scene.id}.md`,
           entity_id: scene.id,
           entity_type: 'scene',
-          message: `"${scene.title ?? scene.id}" has dialogue but no physical action, location, or visual prompt`,
+          message: `"${scene.title ?? scene.id}" has dialogue but no location, visual prompt, mood tags, or character expressions`,
         });
       }
     }
